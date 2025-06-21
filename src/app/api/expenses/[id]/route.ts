@@ -48,8 +48,9 @@ const expenseUpdateSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const token = request.cookies.get('token')?.value
 
@@ -79,7 +80,7 @@ export async function PUT(
     // Verify expense belongs to user
     const existingExpense = await prisma.expense.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: payload.userId,
       },
     })
@@ -92,7 +93,7 @@ export async function PUT(
     }
 
     const expense = await prisma.expense.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...data,
         startDate: toDateOrNull(data.startDate),
@@ -126,8 +127,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const token = request.cookies.get('token')?.value
 
@@ -149,7 +151,7 @@ export async function DELETE(
     // Verify expense belongs to user
     const existingExpense = await prisma.expense.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: payload.userId,
       },
     })
@@ -162,7 +164,7 @@ export async function DELETE(
     }
 
     await prisma.expense.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Expense deleted successfully' })
