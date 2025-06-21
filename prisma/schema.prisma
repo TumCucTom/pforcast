@@ -1,0 +1,153 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  expenses      Expense[]
+  incomes       Income[]
+  assets        Asset[]
+  classifications Classification[]
+  budgets       Budget[]
+
+  @@map("users")
+}
+
+model Classification {
+  id          String   @id @default(cuid())
+  name        String
+  type        ClassificationType
+  color       String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses    Expense[]
+  incomes     Income[]
+
+  @@map("classifications")
+}
+
+model Expense {
+  id              String   @id @default(cuid())
+  name            String
+  amount          Float
+  frequency       Frequency
+  startDate       DateTime?
+  endDate         DateTime?
+  increaseType    IncreaseType
+  increaseRate    Float    @default(0)
+  classificationId String?
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classification  Classification? @relation(fields: [classificationId], references: [id])
+
+  @@map("expenses")
+}
+
+model Income {
+  id              String   @id @default(cuid())
+  name            String
+  amount          Float
+  frequency       Frequency
+  startDate       DateTime?
+  endDate         DateTime?
+  increaseType    IncreaseType
+  increaseRate    Float    @default(0)
+  classificationId String?
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classification  Classification? @relation(fields: [classificationId], references: [id])
+
+  @@map("incomes")
+}
+
+model Asset {
+  id              String   @id @default(cuid())
+  name            String
+  type            AssetType
+  value           Float
+  annualReturn    Float    @default(0)
+  returnType      ReturnType
+  annualDividend  Float    @default(0)
+  dividendStartDate DateTime?
+  dividendEndDate   DateTime?
+  isDividendTaxed Boolean  @default(true)
+  saleDate        DateTime?
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("assets")
+}
+
+model Budget {
+  id        String   @id @default(cuid())
+  userId    String
+  inflationRate Float @default(2.5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@map("budgets")
+}
+
+enum ClassificationType {
+  EXPENSE
+  INCOME
+}
+
+enum Frequency {
+  MONTHLY
+  ANNUAL
+}
+
+enum IncreaseType {
+  FIXED
+  INFLATION_LINKED
+}
+
+enum AssetType {
+  CASH
+  SAVINGS
+  PROPERTY
+  EQUITY
+  BONDS
+  OTHER
+}
+
+enum ReturnType {
+  FIXED
+  INFLATION_LINKED
+}
