@@ -113,6 +113,7 @@ model Budget {
   id        String   @id @default(cuid())
   userId    String
   inflationRate Float @default(2.5)
+  projectEndDate DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

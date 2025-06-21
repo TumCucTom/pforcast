@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
     if (!budget) {
       return NextResponse.json({ error: 'Budget not found' }, { status: 404 })
     }
-    return NextResponse.json({ inflationRate: budget.inflationRate })
+    return NextResponse.json({ 
+      inflationRate: budget.inflationRate,
+      projectEndDate: budget.projectEndDate?.toISOString().split('T')[0] || null
+    })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -32,12 +35,18 @@ export async function PUT(request: NextRequest) {
     if (!payload) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const { inflationRate } = await request.json()
+    const { inflationRate, projectEndDate } = await request.json()
     const budget = await prisma.budget.update({
       where: { userId: payload.userId },
-      data: { inflationRate },
+      data: { 
+        inflationRate,
+        projectEndDate: projectEndDate ? new Date(projectEndDate) : null
+      },
     })
-    return NextResponse.json({ inflationRate: budget.inflationRate })
+    return NextResponse.json({ 
+      inflationRate: budget.inflationRate,
+      projectEndDate: budget.projectEndDate?.toISOString().split('T')[0] || null
+    })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

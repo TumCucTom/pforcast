@@ -240,7 +240,7 @@ export default function AssetManager() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                   required
                 />
               </div>
@@ -252,7 +252,7 @@ export default function AssetManager() {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as Asset['type'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 >
                   <option value="CASH">Cash</option>
                   <option value="SAVINGS">Savings</option>
@@ -272,7 +272,7 @@ export default function AssetManager() {
                   step="0.01"
                   value={formData.value}
                   onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                   required
                 />
               </div>
@@ -286,7 +286,7 @@ export default function AssetManager() {
                   step="0.01"
                   value={formData.annualReturn}
                   onChange={(e) => setFormData({ ...formData, annualReturn: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                   required
                 />
               </div>
@@ -298,7 +298,7 @@ export default function AssetManager() {
                 <select
                   value={formData.returnType}
                   onChange={(e) => setFormData({ ...formData, returnType: e.target.value as 'FIXED' | 'INFLATION_LINKED' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 >
                   <option value="FIXED">Fixed</option>
                   <option value="INFLATION_LINKED">Inflation Linked</option>
@@ -314,7 +314,7 @@ export default function AssetManager() {
                   step="0.01"
                   value={formData.annualDividend}
                   onChange={(e) => setFormData({ ...formData, annualDividend: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                   required
                 />
               </div>
@@ -327,7 +327,7 @@ export default function AssetManager() {
                   type="date"
                   value={formData.dividendStartDate}
                   onChange={(e) => setFormData({ ...formData, dividendStartDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 />
               </div>
 
@@ -339,7 +339,7 @@ export default function AssetManager() {
                   type="date"
                   value={formData.dividendEndDate}
                   onChange={(e) => setFormData({ ...formData, dividendEndDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 />
               </div>
 
@@ -350,7 +350,7 @@ export default function AssetManager() {
                 <select
                   value={formData.isDividendTaxed ? 'yes' : 'no'}
                   onChange={(e) => setFormData({ ...formData, isDividendTaxed: e.target.value === 'yes' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 >
                   <option value="yes">Taxed</option>
                   <option value="no">Tax Free</option>
@@ -365,7 +365,7 @@ export default function AssetManager() {
                   type="date"
                   value={formData.saleDate}
                   onChange={(e) => setFormData({ ...formData, saleDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 />
               </div>
             </div>

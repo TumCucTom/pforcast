@@ -186,11 +186,38 @@ export default function IncomeManager() {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: 'GBP',
-    }).format(amount)
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount))
   }
 
   const getMonthlyAmount = (income: Income) => {
-    return income.frequency === 'ANNUAL' ? income.amount / 12 : income.amount
+    return income.frequency === 'ANNUAL' ? Math.round(income.amount / 12) : Math.round(income.amount)
+  }
+
+  const getAnnualAmount = (income: Income) => {
+    return income.frequency === 'ANNUAL' ? Math.round(income.amount) : Math.round(income.amount * 12)
+  }
+
+  const isIncomeActive = (income: Income) => {
+    const now = new Date()
+    const startDate = income.startDate ? new Date(income.startDate) : null
+    const endDate = income.endDate ? new Date(income.endDate) : null
+    
+    if (startDate && now < startDate) return false
+    if (endDate && now > endDate) return false
+    return true
+  }
+
+  const getTotalAnnualIncome = () => {
+    return incomes
+      .filter(isIncomeActive)
+      .reduce((sum, income) => sum + getAnnualAmount(income), 0)
+  }
+
+  const getTotalMonthlyIncome = () => {
+    return incomes
+      .filter(isIncomeActive)
+      .reduce((sum, income) => sum + getMonthlyAmount(income), 0)
   }
 
   if (isLoading) {
@@ -256,7 +283,7 @@ export default function IncomeManager() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                   required
                 />
               </div>
@@ -270,7 +297,7 @@ export default function IncomeManager() {
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                   required
                 />
               </div>
@@ -282,7 +309,7 @@ export default function IncomeManager() {
                 <select
                   value={formData.frequency}
                   onChange={(e) => setFormData({ ...formData, frequency: e.target.value as 'MONTHLY' | 'ANNUAL' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 >
                   <option value="MONTHLY">Monthly</option>
                   <option value="ANNUAL">Annual</option>
@@ -296,7 +323,7 @@ export default function IncomeManager() {
                 <select
                   value={formData.classificationId}
                   onChange={(e) => setFormData({ ...formData, classificationId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 >
                   <option value="">No Classification</option>
                   {classifications.map((classification) => (
@@ -315,7 +342,7 @@ export default function IncomeManager() {
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 />
               </div>
 
@@ -327,7 +354,7 @@ export default function IncomeManager() {
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 />
               </div>
 
@@ -338,7 +365,7 @@ export default function IncomeManager() {
                 <select
                   value={formData.increaseType}
                   onChange={(e) => setFormData({ ...formData, increaseType: e.target.value as 'FIXED' | 'INFLATION_LINKED' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                 >
                   <option value="FIXED">Fixed Percentage</option>
                   <option value="INFLATION_LINKED">Inflation Linked</option>
@@ -354,7 +381,7 @@ export default function IncomeManager() {
                   step="0.01"
                   value={formData.increaseRate}
                   onChange={(e) => setFormData({ ...formData, increaseRate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
                   required
                 />
               </div>
@@ -493,7 +520,7 @@ export default function IncomeManager() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(incomes.reduce((sum, e) => sum + getMonthlyAmount(e), 0))}
+                {formatCurrency(getTotalMonthlyIncome())}
               </div>
               <div className="text-sm text-gray-600">Total Monthly Income</div>
             </div>
@@ -505,7 +532,7 @@ export default function IncomeManager() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(incomes.reduce((sum, e) => sum + e.amount, 0))}
+                {formatCurrency(getTotalAnnualIncome())}
               </div>
               <div className="text-sm text-gray-600">Total Annual Income</div>
             </div>

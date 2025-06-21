@@ -17,7 +17,8 @@ import ExpenseManager from '@/components/ExpenseManager'
 import IncomeManager from '@/components/IncomeManager'
 import AssetManager from '@/components/AssetManager'
 import ProjectionCharts from '@/components/ProjectionCharts'
-import InflationSlider from '@/components/InflationSlider'
+import SettingsManager from '@/components/SettingsManager'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface Summary {
   currentMonth: {
@@ -32,6 +33,7 @@ interface Summary {
   assetBreakdown: Record<string, number>
   cashFlowIssues: number
   inflationRate: number
+  projection?: { month: string; totalIncome: number; totalExpenses: number }[]
 }
 
 export default function Dashboard() {
@@ -73,7 +75,21 @@ export default function Dashboard() {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: 'GBP',
-    }).format(amount)
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount))
+  }
+
+  const handleQuickAction = (tab: string) => {
+    setActiveTab(tab)
+  }
+
+  const formatChartData = (projection: any[]) => {
+    return projection.map(item => ({
+      ...item,
+      month: new Date(item.month).getFullYear().toString(),
+      totalIncome: Math.round(item.totalIncome),
+      totalExpenses: Math.round(item.totalExpenses)
+    }))
   }
 
   if (isLoading) {
@@ -204,19 +220,44 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Monthly Income vs Expenses Chart */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Income vs Expenses</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={formatChartData(summary.projection || [])} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="month" minTickGap={24} />
+                  <YAxis tickFormatter={v => `£${v.toLocaleString()}`}/>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Tooltip formatter={(v: number) => `£${v.toLocaleString()}`}/>
+                  <Legend />
+                  <Line type="monotone" dataKey="totalIncome" stroke="#10B981" name="Income" dot={false} strokeWidth={2} />
+                  <Line type="monotone" dataKey="totalExpenses" stroke="#EF4444" name="Expenses" dot={false} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button 
+                  onClick={() => handleQuickAction('expenses')}
+                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Expense
                 </button>
-                <button className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button 
+                  onClick={() => handleQuickAction('income')}
+                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Income
                 </button>
-                <button className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button 
+                  onClick={() => handleQuickAction('assets')}
+                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Asset
                 </button>
@@ -266,10 +307,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'settings' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Settings</h2>
-            <p className="text-gray-600">Settings coming soon...</p>
-          </div>
+          <SettingsManager />
         )}
       </div>
     </div>

@@ -35,10 +35,8 @@ export async function GET(request: NextRequest) {
 
     const expenses = await prisma.expense.findMany({
       where: { userId: payload.userId },
-      include: {
-        classification: true,
-      },
-      orderBy: { createdAt: 'asc' },
+      include: { classification: true },
+      orderBy: { createdAt: 'desc' },
     })
 
     return NextResponse.json(expenses)

@@ -35,10 +35,8 @@ export async function GET(request: NextRequest) {
 
     const incomes = await prisma.income.findMany({
       where: { userId: payload.userId },
-      include: {
-        classification: true,
-      },
-      orderBy: { createdAt: 'asc' },
+      include: { classification: true },
+      orderBy: { createdAt: 'desc' },
     })
 
     return NextResponse.json(incomes)

@@ -98,3 +98,15 @@ Enhance the settings page with inflation rate controls
 
 do the above
 ```
+
+the summary tiles on the dashboard are all zero.  these should be linked to the data.  the quick actions tiles on the dashboard are also incorrect.  Add the inflation slider to the settings page.  also add the ability to create classifications on the settings page.  Classifications should be the same across income and expenses.  classifications should be blank on initial set up (ie its optional if a user wants to use this feature or not).  It the absence of any classifications everything should be classifed under a category called My ToitL Budget.  on the projections page create 2 tables. table 1 should summarise expensea and income by classification with a drill down option.  Table 2 should show asset vale by asset type with a drill down option. for expense
+
+.....
+
+Editing the income fields doesnt work.  Also. there are a set of default classififcations in there that i dont want.  Classications should just be My Budget, unless users add new classifications in the settings page.  the classifications should not be different by income or expense. the font in the input boxes is too difficult to read.  the project chart should show monthly income vs expenses. please remove net income.  Renane Cash Flow Over Time chart to Net Cashflow and this should display total income - total expenditure
+
+.....
+
+Add a feature in the settings page that lets me determine the end of the project period in the charts.  Update the charts to use this feature.  remove all classifications from the system and only have one classification called My Budget.  Users should use the existing functiuonality to add or change any additional classifications that they want.  Move Monthly Income vs Expenses chart to the top of the chart page and also include this chart below the tiles on the dashboard.
+
+.....

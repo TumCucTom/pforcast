@@ -34,6 +34,11 @@ const TAX_RATES = {
   additional: 0.45,
 }
 
+// Helper function to round to nearest GBP
+export function roundToGBP(amount: number): number {
+  return Math.round(amount)
+}
+
 export function calculateMonthlyRate(annualRate: number): number {
   return Math.pow(1 + annualRate / 100, 1 / 12) - 1
 }
@@ -63,7 +68,7 @@ export function calculateTax(monthlyIncome: number): number {
     tax += taxableIncome * TAX_RATES.additional
   }
 
-  return tax
+  return roundToGBP(tax)
 }
 
 export function projectExpense(
@@ -88,13 +93,13 @@ export function projectExpense(
   const monthsDiff = (projectionDate.getFullYear() - start.getFullYear()) * 12 + 
                      (projectionDate.getMonth() - start.getMonth())
 
-  if (monthsDiff <= 0) return monthlyAmount
+  if (monthsDiff <= 0) return roundToGBP(monthlyAmount)
 
   // Apply increase rate
   const effectiveRate = increaseType === 'INFLATION_LINKED' ? inflationRate : increaseRate
   const monthlyRate = calculateMonthlyRate(effectiveRate)
   
-  return monthlyAmount * Math.pow(1 + monthlyRate, monthsDiff)
+  return roundToGBP(monthlyAmount * Math.pow(1 + monthlyRate, monthsDiff))
 }
 
 export function projectAsset(
@@ -141,9 +146,9 @@ export function projectAsset(
     assetId: asset.id,
     name: asset.name,
     type: asset.type,
-    value: newValue,
-    monthlyReturn,
-    monthlyDividend,
+    value: roundToGBP(newValue),
+    monthlyReturn: roundToGBP(monthlyReturn),
+    monthlyDividend: roundToGBP(monthlyDividend),
     isSold: false,
   }
 }
@@ -161,7 +166,7 @@ export function generateProjection(
   
   // Initialize asset values
   assets.forEach(asset => {
-    assetValues[asset.id] = asset.value
+    assetValues[asset.id] = roundToGBP(asset.value)
   })
 
   for (let i = 0; i < months; i++) {
@@ -228,17 +233,31 @@ export function generateProjection(
 
     projections.push({
       month: projectionDate,
-      totalIncome,
-      totalExpenses,
-      netIncome,
-      tax,
-      cashFlow,
-      assetValues: { ...newAssetValues },
-      investmentIncome,
+      totalIncome: roundToGBP(totalIncome),
+      totalExpenses: roundToGBP(totalExpenses),
+      netIncome: roundToGBP(netIncome),
+      tax: roundToGBP(tax),
+      cashFlow: roundToGBP(cashFlow),
+      assetValues: Object.fromEntries(
+        Object.entries(newAssetValues).map(([key, value]) => [key, roundToGBP(value)])
+      ),
+      investmentIncome: roundToGBP(investmentIncome),
     })
 
     assetValues = newAssetValues
   }
 
   return projections
+}
+
+// New function to calculate total annual income correctly
+export function calculateTotalAnnualIncome(incomes: any[]): number {
+  return incomes.reduce((total, income) => {
+    if (income.frequency === 'ANNUAL') {
+      return total + income.amount
+    } else {
+      // MONTHLY frequency
+      return total + (income.amount * 12)
+    }
+  }, 0)
 } 
