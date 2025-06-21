@@ -1,3 +1,8 @@
+[![Deploy Status](https://img.shields.io/badge/Deployed%20on-Vercel-00C7B7?style=for-the-badge&logo=vercel)](https://bld-cube.thomasbale.com)
+[![Issues](https://img.shields.io/badge/Issues-VibeOps-FF6B6B?style=for-the-badge)](https://github.com/TumCucTom/blind-cube/issues)
+
+# 🎮 Poly-Hop: Webcam-Controlled Platformer
+
 # PForcast - Lifetime Financial Budget Planner
 
 PForcast is a comprehensive web application that allows users to create and model their lifetime financial budget with advanced forecasting capabilities. The application provides detailed analysis of expenses, income, assets, and projects future financial scenarios with realistic assumptions.
