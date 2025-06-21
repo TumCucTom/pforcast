@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   const fetchSummary = async () => {
     try {
-      const response = await fetch('/api/projection')
+      const response = await fetch('/api/projection', { credentials: 'include' })
       if (!response.ok) {
         if (response.status === 401) {
           router.push('/')

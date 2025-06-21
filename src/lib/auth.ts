@@ -10,12 +10,14 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 export function generateToken(userId: string): string {
-  return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: '7d' })
+  const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'fallback-secret-key'
+  return jwt.sign({ userId }, secret, { expiresIn: '7d' })
 }
 
 export function verifyToken(token: string): { userId: string } | null {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'fallback-secret-key'
+    return jwt.verify(token, secret) as { userId: string }
   } catch {
     return null
   }

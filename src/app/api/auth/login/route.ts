@@ -4,14 +4,35 @@ import { verifyPassword, generateToken } from '@/lib/auth'
 import { z } from 'zod'
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
 })
 
 export async function POST(request: NextRequest) {
   try {
+    // Parse request body
     const body = await request.json()
-    const { email, password } = loginSchema.parse(body)
+    const validationResult = loginSchema.safeParse(body)
+    
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input data', details: validationResult.error.errors },
+        { status: 400 }
+      )
+    }
+
+    const { email, password } = validationResult.data
+
+    // Test database connection
+    try {
+      await prisma.$connect()
+    } catch (dbError) {
+      console.error('Database connection error:', dbError)
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      )
+    }
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -20,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { error: 'Invalid email or password' },
         { status: 401 }
       )
     }
@@ -30,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     if (!isValidPassword) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { error: 'Invalid email or password' },
         { status: 401 }
       )
     }
@@ -55,15 +76,26 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60, // 7 days
     })
 
     return response
   } catch (error) {
     console.error('Login error:', error)
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Invalid request data' },
-      { status: 400 }
+      { error: 'Internal server error' },
+      { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 } 

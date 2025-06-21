@@ -5,12 +5,12 @@ import { generateProjection } from '@/lib/calculations'
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.cookies.get('token')?.value
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const payload = await verifyToken(token)
+    const payload = verifyToken(token)
     if (!payload) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
@@ -40,12 +40,18 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, number>)
 
     const summary = {
-      totalAssets: assets.reduce((sum, a) => sum + a.value, 0),
-      totalIncome: currentMonth.totalIncome,
-      totalExpenses: currentMonth.totalExpenses,
-      netCashFlow: currentMonth.cashFlow,
+      currentMonth: {
+        totalIncome: currentMonth.totalIncome,
+        totalExpenses: currentMonth.totalExpenses,
+        netIncome: currentMonth.totalIncome - currentMonth.totalExpenses,
+        tax: currentMonth.tax || 0,
+        cashFlow: currentMonth.cashFlow,
+        investmentIncome: currentMonth.investmentIncome || 0,
+      },
+      totalAssetValue: assets.reduce((sum, a) => sum + a.value, 0),
       assetBreakdown,
-      projectionMonths: projection.length,
+      cashFlowIssues: projection.filter(p => p.cashFlow < 0).length,
+      inflationRate: budget.inflationRate,
     }
 
     return NextResponse.json({ projection, summary })

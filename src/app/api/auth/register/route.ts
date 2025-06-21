@@ -2,18 +2,38 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { z } from 'zod'
-import { DEFAULT_ASSETS } from '@/lib/defaults'
 
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   name: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
   try {
+    // Parse request body
     const body = await request.json()
-    const { email, password, name } = registerSchema.parse(body)
+    const validationResult = registerSchema.safeParse(body)
+    
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input data', details: validationResult.error.errors },
+        { status: 400 }
+      )
+    }
+
+    const { email, password, name } = validationResult.data
+
+    // Test database connection
+    try {
+      await prisma.$connect()
+    } catch (dbError) {
+      console.error('Database connection error:', dbError)
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      )
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -22,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User already exists' },
+        { error: 'User with this email already exists' },
         { status: 400 }
       )
     }
@@ -35,7 +55,7 @@ export async function POST(request: NextRequest) {
       data: {
         email,
         password: hashedPassword,
-        name,
+        name: name || null,
       },
     })
 
@@ -68,7 +88,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create default assets
-    for (const asset of DEFAULT_ASSETS) {
+    const defaultAssets = [
+      { name: 'Cash', type: 'CASH' as const, value: 0, annualReturn: 0, annualDividend: 0 },
+      { name: 'Savings', type: 'SAVINGS' as const, value: 0, annualReturn: 2.5, annualDividend: 0 },
+      { name: 'Pension', type: 'EQUITY' as const, value: 0, annualReturn: 6.0, annualDividend: 2.0 },
+      { name: 'ISA', type: 'EQUITY' as const, value: 0, annualReturn: 7.0, annualDividend: 2.5 },
+      { name: 'Home Value', type: 'PROPERTY' as const, value: 0, annualReturn: 3.0, annualDividend: 0 },
+      { name: 'Mortgage', type: 'OTHER' as const, value: 0, annualReturn: 0, annualDividend: 0 },
+    ]
+
+    for (const asset of defaultAssets) {
       await prisma.asset.create({
         data: {
           name: asset.name,
@@ -87,14 +116,31 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: 'User created successfully' },
+      { 
+        message: 'User created successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name
+        }
+      },
       { status: 201 }
     )
   } catch (error) {
     console.error('Registration error:', error)
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Invalid request data' },
-      { status: 400 }
+      { error: 'Internal server error' },
+      { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 } 
