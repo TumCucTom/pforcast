@@ -28,7 +28,11 @@ interface Classification {
   color: string
 }
 
-export default function ExpenseManager() {
+interface ExpenseManagerProps {
+  onDataChange?: () => void
+}
+
+export default function ExpenseManager({ onDataChange }: ExpenseManagerProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [classifications, setClassifications] = useState<Classification[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -103,9 +107,23 @@ export default function ExpenseManager() {
         setEditingExpense(null)
         resetForm()
         fetchExpenses()
+        if (onDataChange) {
+          onDataChange()
+        }
+      } else {
+        const errorData = await response.json()
+        console.error('Failed to save expense:', errorData)
+        if (errorData.details && Array.isArray(errorData.details)) {
+          alert(`Validation errors:\n${errorData.details.join('\n')}`)
+        } else if (errorData.error) {
+          alert(`Error: ${errorData.error}`)
+        } else {
+          alert('Failed to save expense. Please check your input and try again.')
+        }
       }
     } catch (error) {
       console.error('Error saving expense:', error)
+      alert('Network error. Please try again.')
     }
   }
 
@@ -134,6 +152,9 @@ export default function ExpenseManager() {
 
       if (response.ok) {
         fetchExpenses()
+        if (onDataChange) {
+          onDataChange()
+        }
       }
     } catch (error) {
       console.error('Error deleting expense:', error)
@@ -174,6 +195,9 @@ export default function ExpenseManager() {
 
       if (response.ok) {
         fetchExpenses()
+        if (onDataChange) {
+          onDataChange()
+        }
       } else {
         console.error('Failed to add default expense:', response.statusText)
       }
@@ -191,6 +215,17 @@ export default function ExpenseManager() {
 
   const getMonthlyAmount = (expense: Expense) => {
     return expense.frequency === 'ANNUAL' ? expense.amount / 12 : expense.amount
+  }
+
+  const getTotalAnnualExpenses = () => {
+    return expenses.reduce((sum, expense) => {
+      if (expense.frequency === 'ANNUAL') {
+        return sum + expense.amount
+      } else {
+        // MONTHLY frequency - multiply by 12
+        return sum + (expense.amount * 12)
+      }
+    }, 0)
   }
 
   if (isLoading) {
@@ -214,6 +249,33 @@ export default function ExpenseManager() {
           Add Expense
         </button>
       </div>
+
+      {/* Summary - Moved to top */}
+      {expenses.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {formatCurrency(expenses.reduce((sum, e) => sum + getMonthlyAmount(e), 0))}
+              </div>
+              <div className="text-sm text-gray-600">Total Monthly Expenses</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {expenses.length}
+              </div>
+              <div className="text-sm text-gray-600">Total Expenses</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {formatCurrency(getTotalAnnualExpenses())}
+              </div>
+              <div className="text-sm text-gray-600">Total Annual Expenses</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Default Expenses */}
       {expenses.length === 0 && (
@@ -256,7 +318,7 @@ export default function ExpenseManager() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                   required
                 />
               </div>
@@ -270,7 +332,7 @@ export default function ExpenseManager() {
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                   required
                 />
               </div>
@@ -282,7 +344,7 @@ export default function ExpenseManager() {
                 <select
                   value={formData.frequency}
                   onChange={(e) => setFormData({ ...formData, frequency: e.target.value as 'MONTHLY' | 'ANNUAL' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 >
                   <option value="MONTHLY">Monthly</option>
                   <option value="ANNUAL">Annual</option>
@@ -296,7 +358,7 @@ export default function ExpenseManager() {
                 <select
                   value={formData.classificationId}
                   onChange={(e) => setFormData({ ...formData, classificationId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 >
                   <option value="">No Classification</option>
                   {classifications.map((classification) => (
@@ -315,7 +377,7 @@ export default function ExpenseManager() {
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 />
               </div>
 
@@ -327,7 +389,7 @@ export default function ExpenseManager() {
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 />
               </div>
 
@@ -338,23 +400,23 @@ export default function ExpenseManager() {
                 <select
                   value={formData.increaseType}
                   onChange={(e) => setFormData({ ...formData, increaseType: e.target.value as 'FIXED' | 'INFLATION_LINKED' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 >
-                  <option value="FIXED">Fixed Percentage</option>
+                  <option value="FIXED">Fixed</option>
                   <option value="INFLATION_LINKED">Inflation Linked</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Annual Increase Rate (%)
+                  Increase Rate (%)
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.increaseRate}
                   onChange={(e) => setFormData({ ...formData, increaseRate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                   required
                 />
               </div>
@@ -482,33 +544,6 @@ export default function ExpenseManager() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Summary */}
-      {expenses.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(expenses.reduce((sum, e) => sum + getMonthlyAmount(e), 0))}
-              </div>
-              <div className="text-sm text-gray-600">Total Monthly Expenses</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {expenses.length}
-              </div>
-              <div className="text-sm text-gray-600">Total Expenses</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0))}
-              </div>
-              <div className="text-sm text-gray-600">Total Annual Expenses</div>
-            </div>
           </div>
         </div>
       )}

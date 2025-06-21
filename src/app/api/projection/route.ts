@@ -63,6 +63,16 @@ export async function GET(request: NextRequest) {
       p.month.getMonth() === targetMonth.getMonth()
     ) || projection[0]
 
+    console.log('Selected month projection:', {
+      month: selectedMonthProjection.month,
+      totalIncomeBeforeTax: selectedMonthProjection.totalIncomeBeforeTax,
+      totalIncomeAfterTax: selectedMonthProjection.totalIncomeAfterTax,
+      totalExpenses: selectedMonthProjection.totalExpenses,
+      investmentIncome: selectedMonthProjection.investmentIncome,
+      netIncome: selectedMonthProjection.netIncome,
+      cashFlow: selectedMonthProjection.cashFlow
+    })
+
     // Calculate summary statistics
     const currentMonth = selectedMonthProjection
     const assetBreakdown = assets.reduce((acc, asset) => {
@@ -77,7 +87,8 @@ export async function GET(request: NextRequest) {
     const formattedProjection = projection.map(p => ({
       ...p,
       month: p.month.toISOString(),
-      totalIncome: roundToGBP(p.totalIncome),
+      totalIncomeBeforeTax: roundToGBP(p.totalIncomeBeforeTax),
+      totalIncomeAfterTax: roundToGBP(p.totalIncomeAfterTax),
       totalExpenses: roundToGBP(p.totalExpenses),
       netIncome: roundToGBP(p.netIncome),
       tax: roundToGBP(p.tax),
@@ -88,9 +99,9 @@ export async function GET(request: NextRequest) {
 
     const summary = {
       currentMonth: {
-        totalIncome: currentMonth.totalIncome,
+        totalIncome: currentMonth.totalIncomeAfterTax,
         totalExpenses: currentMonth.totalExpenses,
-        netIncome: currentMonth.totalIncome - currentMonth.totalExpenses,
+        netIncome: currentMonth.netIncome,
         tax: currentMonth.tax || 0,
         cashFlow: currentMonth.cashFlow,
         investmentIncome: currentMonth.investmentIncome || 0,

@@ -185,7 +185,7 @@ export default function SettingsManager() {
               type="date"
               value={projectEndDate}
               onChange={handleProjectEndDateChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+              className="w-full"
               placeholder="Select end date for projections"
             />
             <p className="text-sm text-gray-500 mt-1">Leave empty to use default 30-year projection</p>
@@ -220,7 +220,7 @@ export default function SettingsManager() {
                 type="text"
                 value={newClassification.name}
                 onChange={(e) => setNewClassification({ ...newClassification, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                className="w-full"
                 placeholder="e.g., Housing, Transportation"
               />
             </div>
@@ -229,7 +229,7 @@ export default function SettingsManager() {
               <select
                 value={newClassification.type}
                 onChange={(e) => setNewClassification({ ...newClassification, type: e.target.value as 'EXPENSE' | 'INCOME' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                className="w-full"
               >
                 <option value="EXPENSE">Expense</option>
                 <option value="INCOME">Income</option>

@@ -20,9 +20,9 @@ export const DEFAULT_EXPENSES = [
 ]
 
 export const DEFAULT_INCOMES = [
-  { name: 'Salary', amount: 5000, frequency: 'MONTHLY' as const },
-  { name: 'Pension', amount: 1500, frequency: 'MONTHLY' as const },
-  { name: 'Benefits', amount: 0, frequency: 'MONTHLY' as const },
+  { name: 'Salary', amount: 5000, frequency: 'MONTHLY' as const, isTaxed: true },
+  { name: 'Pension', amount: 1500, frequency: 'MONTHLY' as const, isTaxed: true },
+  { name: 'Benefits', amount: 0, frequency: 'MONTHLY' as const, isTaxed: false },
 ]
 
 export const DEFAULT_ASSETS = [

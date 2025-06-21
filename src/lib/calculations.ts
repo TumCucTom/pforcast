@@ -2,7 +2,8 @@ import { addMonths, isAfter, isBefore, startOfMonth } from 'date-fns'
 
 export interface MonthlyProjection {
   month: Date
-  totalIncome: number
+  totalIncomeBeforeTax: number
+  totalIncomeAfterTax: number
   totalExpenses: number
   netIncome: number
   tax: number
@@ -109,7 +110,8 @@ export function projectAsset(
   previousValue: number
 ): AssetProjection {
   // Check if asset is sold
-  if (asset.saleDate && isAfter(projectionDate, asset.saleDate)) {
+  if (asset.saleDate && isAfter(projectionDate, new Date(asset.saleDate))) {
+    console.log(`Asset ${asset.name} sold on ${asset.saleDate}, no longer in portfolio after ${projectionDate.toISOString().slice(0, 7)}`)
     return {
       assetId: asset.id,
       name: asset.name,
@@ -134,11 +136,33 @@ export function projectAsset(
   // Calculate dividend
   let monthlyDividend = 0
   if (asset.annualDividend > 0) {
-    const dividendStart = asset.dividendStartDate || new Date()
-    const dividendEnd = asset.dividendEndDate || new Date(2100, 0, 1)
+    const dividendStart = asset.dividendStartDate ? new Date(asset.dividendStartDate) : null
+    const dividendEnd = asset.dividendEndDate ? new Date(asset.dividendEndDate) : new Date(2100, 0, 1)
     
-    if (isAfter(projectionDate, dividendStart) && isBefore(projectionDate, dividendEnd)) {
+    console.log(`Asset ${asset.name} dividend calculation:`, {
+      annualDividend: asset.annualDividend,
+      dividendStartDate: asset.dividendStartDate,
+      dividendEndDate: asset.dividendEndDate,
+      dividendStart: dividendStart,
+      dividendEnd: dividendEnd,
+      projectionDate: projectionDate,
+      isAfterStart: dividendStart ? isAfter(projectionDate, dividendStart) : true,
+      isBeforeEnd: isBefore(projectionDate, dividendEnd),
+      previousValue: previousValue
+    })
+    
+    // Check if dividends should be paid:
+    // 1. If no start date (null), dividends start immediately
+    // 2. If start date is set, dividends start after that date
+    // 3. If end date is set, dividends stop after that date
+    const shouldPayDividend = (dividendStart === null || isAfter(projectionDate, dividendStart)) && 
+                             isBefore(projectionDate, dividendEnd)
+    
+    if (shouldPayDividend) {
       monthlyDividend = previousValue * (asset.annualDividend / 100 / 12)
+      console.log(`Calculated monthly dividend for ${asset.name}: ${monthlyDividend}`)
+    } else {
+      console.log(`No dividend for ${asset.name} in ${projectionDate.toISOString().slice(0, 7)}`)
     }
   }
 
@@ -187,8 +211,11 @@ export function generateProjection(
     }, 0)
 
     // Project incomes
-    const totalIncomes = incomes.reduce((sum, income) => {
-      return sum + projectExpense(
+    let taxedIncome = 0
+    let nonTaxedIncome = 0
+    
+    incomes.forEach(income => {
+      const incomeAmount = projectExpense(
         income.amount,
         income.frequency,
         income.increaseType,
@@ -198,42 +225,67 @@ export function generateProjection(
         income.endDate,
         projectionDate
       )
-    }, 0)
+      
+      if (income.isTaxed) {
+        taxedIncome += incomeAmount
+      } else {
+        nonTaxedIncome += incomeAmount
+      }
+    })
 
     // Project assets and investment income
     let investmentIncome = 0
     const newAssetValues: { [assetId: string]: number } = {}
+    let assetSaleProceeds = 0 // Track proceeds from asset sales
+    
+    console.log(`Month ${projectionDate.toISOString().slice(0, 7)} - Asset projections:`)
     
     assets.forEach(asset => {
       const projection = projectAsset(asset, inflationRate, projectionDate, assetValues[asset.id] || 0)
-      newAssetValues[asset.id] = projection.value
       
-      if (!projection.isSold) {
+      if (projection.isSold) {
+        // Asset was sold - add its value to cash proceeds
+        assetSaleProceeds += assetValues[asset.id] || 0
+        newAssetValues[asset.id] = 0
+        console.log(`Asset ${asset.name} sold for ${assetValues[asset.id] || 0}, added to cash proceeds`)
+      } else {
+        // Asset continues to exist
+        newAssetValues[asset.id] = projection.value
         investmentIncome += projection.monthlyDividend
+        console.log(`Asset ${asset.name}: ${assetValues[asset.id] || 0} -> ${projection.value} (${asset.value < 0 ? 'negative asset' : 'positive asset'})`)
       }
     })
 
-    // Calculate total income including investment income
-    const totalIncome = totalIncomes + investmentIncome
+    console.log(`Total asset value: ${Object.values(newAssetValues).reduce((sum, val) => sum + val, 0)}`)
+    console.log(`Asset sale proceeds: ${assetSaleProceeds}`)
 
-    // Calculate tax
-    const tax = calculateTax(totalIncome)
+    // Calculate total income before tax (including investment income)
+    const totalIncomeBeforeTax = taxedIncome + nonTaxedIncome + investmentIncome
+
+    // Calculate tax only on taxed income and taxed investment income
+    const totalTaxedIncome = taxedIncome + (investmentIncome * 0.8) // Assume 80% of investment income is taxed
+    const tax = calculateTax(totalTaxedIncome)
+
+    // Calculate total income after tax
+    const totalIncomeAfterTax = totalIncomeBeforeTax - tax
 
     // Calculate net income
-    const netIncome = totalIncome - tax
+    const netIncome = totalIncomeAfterTax - totalExpenses
 
-    // Calculate cash flow
-    const cashFlow = netIncome - totalExpenses
+    // Calculate cash flow (income after tax minus expenses)
+    const cashFlow = totalIncomeAfterTax - totalExpenses
 
-    // Update cash asset
+    // Update cash asset (include asset sale proceeds)
     const cashAsset = assets.find(a => a.type === 'CASH')
     if (cashAsset) {
-      newAssetValues[cashAsset.id] = (newAssetValues[cashAsset.id] || 0) + cashFlow
+      newAssetValues[cashAsset.id] = (newAssetValues[cashAsset.id] || 0) + cashFlow + assetSaleProceeds
+      console.log(`Updated cash asset: ${newAssetValues[cashAsset.id]}, cashFlow: ${cashFlow}, assetSaleProceeds: ${assetSaleProceeds}`)
     }
 
     projections.push({
       month: projectionDate,
-      totalIncome: roundToGBP(totalIncome),
+      totalIncomeBeforeTax: roundToGBP(totalIncomeBeforeTax),
+      totalIncomeAfterTax: roundToGBP(totalIncomeAfterTax),
       totalExpenses: roundToGBP(totalExpenses),
       netIncome: roundToGBP(netIncome),
       tax: roundToGBP(tax),

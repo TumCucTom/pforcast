@@ -75,6 +75,7 @@ model Income {
   endDate         DateTime?
   increaseType    IncreaseType
   increaseRate    Float    @default(0)
+  isTaxed         Boolean  @default(true)
   classificationId String?
   userId          String
   createdAt       DateTime @default(now())

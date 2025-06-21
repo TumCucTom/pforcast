@@ -11,6 +11,7 @@ const incomeSchema = z.object({
   endDate: z.string().nullable().optional(),
   increaseType: z.enum(['FIXED', 'INFLATION_LINKED']),
   increaseRate: z.number().min(0),
+  isTaxed: z.boolean().default(true),
   classificationId: z.string().nullable().optional(),
 })
 

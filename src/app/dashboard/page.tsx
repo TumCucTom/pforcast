@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   Plus,
-  Eye
+  Eye,
+  RefreshCw
 } from 'lucide-react'
 import { format } from 'date-fns'
 import ExpenseManager from '@/components/ExpenseManager'
@@ -81,13 +82,21 @@ export default function Dashboard() {
 
   const handleQuickAction = (tab: string) => {
     setActiveTab(tab)
+    if (tab === 'overview') {
+      fetchSummary()
+    }
+  }
+
+  const handleRefresh = () => {
+    setIsLoading(true)
+    fetchSummary()
   }
 
   const formatChartData = (projection: any[]) => {
     return projection.map(item => ({
       ...item,
       month: new Date(item.month).getFullYear().toString(),
-      totalIncome: Math.round(item.totalIncome),
+      totalIncome: Math.round(item.totalIncomeAfterTax || item.totalIncome),
       totalExpenses: Math.round(item.totalExpenses)
     }))
   }
@@ -113,6 +122,13 @@ export default function Dashboard() {
               <h1 className="text-xl font-semibold text-gray-900">PForcast</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <a
+                href="/debug"
+                className="flex items-center text-gray-500 hover:text-gray-700 text-sm"
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                Debug
+              </a>
               <button
                 onClick={handleLogout}
                 className="flex items-center text-gray-600 hover:text-gray-900"
@@ -127,7 +143,7 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
-        <div className="mb-8">
+        <div className="mb-8 flex justify-between items-center">
           <nav className="flex space-x-8">
             {[
               { id: 'overview', name: 'Overview', icon: Eye },
@@ -141,7 +157,7 @@ export default function Dashboard() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleQuickAction(tab.id)}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                     activeTab === tab.id
                       ? 'bg-blue-100 text-blue-700'
@@ -154,6 +170,15 @@ export default function Dashboard() {
               )
             })}
           </nav>
+          {activeTab === 'overview' && (
+            <button
+              onClick={handleRefresh}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -167,7 +192,7 @@ export default function Dashboard() {
                     <TrendingUp className="h-6 w-6 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Monthly Income</p>
+                    <p className="text-sm font-medium text-gray-600">Monthly Income (After Tax)</p>
                     <p className="text-2xl font-semibold text-gray-900">
                       {formatCurrency(summary.currentMonth.totalIncome)}
                     </p>
@@ -196,6 +221,7 @@ export default function Dashboard() {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Net Cash Flow</p>
+                    <p className="text-xs text-gray-500">(Income after tax - Expenses)</p>
                     <p className={`text-2xl font-semibold ${
                       summary.currentMonth.cashFlow >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
@@ -222,7 +248,7 @@ export default function Dashboard() {
 
             {/* Monthly Income vs Expenses Chart */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Income vs Expenses</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Income (After Tax) vs Expenses</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={formatChartData(summary.projection || [])} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <XAxis dataKey="month" minTickGap={24} />
@@ -291,11 +317,11 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'expenses' && (
-          <ExpenseManager />
+          <ExpenseManager onDataChange={handleRefresh} />
         )}
 
         {activeTab === 'income' && (
-          <IncomeManager />
+          <IncomeManager onDataChange={handleRefresh} />
         )}
 
         {activeTab === 'assets' && (

@@ -57,15 +57,76 @@ export default function AssetManager() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Client-side validation
+    if (!formData.name.trim()) {
+      alert('Please enter an asset name')
+      return
+    }
+    
+    const value = parseFloat(formData.value)
+    if (!formData.value || isNaN(value)) {
+      alert('Please enter a valid asset value')
+      return
+    }
+    
+    const annualReturn = parseFloat(formData.annualReturn)
+    if (isNaN(annualReturn)) {
+      alert('Please enter a valid annual return')
+      return
+    }
+    
+    const annualDividend = parseFloat(formData.annualDividend)
+    if (annualDividend < 0) {
+      alert('Annual dividend cannot be negative')
+      return
+    }
+    
+    // Validate dividend start date if provided
+    if (formData.dividendStartDate) {
+      const startDate = new Date(formData.dividendStartDate + 'T00:00:00.000Z')
+      const today = new Date()
+      today.setHours(0, 0, 0, 0) // Reset time to start of day for comparison
+      
+      if (startDate < today) {
+        alert('Dividend start date cannot be in the past. Leave blank for immediate dividends or set a future date.')
+        return
+      }
+    }
+    
+    // Validate dividend end date if provided
+    if (formData.dividendEndDate) {
+      const endDate = new Date(formData.dividendEndDate + 'T00:00:00.000Z')
+      const startDate = formData.dividendStartDate ? new Date(formData.dividendStartDate + 'T00:00:00.000Z') : new Date()
+      
+      if (endDate <= startDate) {
+        alert('Dividend end date must be after the start date')
+        return
+      }
+    }
+    
+    // Validate sale date if provided
+    if (formData.saleDate) {
+      const saleDate = new Date(formData.saleDate + 'T00:00:00.000Z')
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      if (saleDate < today) {
+        alert('Sale date cannot be in the past')
+        return
+      }
+    }
+    
     const payload = {
       ...formData,
-      value: parseFloat(formData.value),
-      annualReturn: parseFloat(formData.annualReturn),
-      annualDividend: parseFloat(formData.annualDividend),
+      value: value,
+      annualReturn: annualReturn,
+      annualDividend: annualDividend,
       dividendStartDate: formData.dividendStartDate || null,
       dividendEndDate: formData.dividendEndDate || null,
       saleDate: formData.saleDate || null,
     }
+
+    console.log('Submitting asset payload:', payload)
 
     try {
       const url = editingAsset ? `/api/assets/${editingAsset.id}` : '/api/assets'
@@ -78,17 +139,55 @@ export default function AssetManager() {
       })
 
       if (response.ok) {
+        const result = await response.json()
+        console.log('Asset saved successfully:', result)
         setShowForm(false)
         setEditingAsset(null)
         resetForm()
         fetchAssets()
+      } else {
+        const errorData = await response.json()
+        console.error('Failed to save asset:', errorData)
+        
+        // Show user-friendly error message
+        if (errorData.details && Array.isArray(errorData.details)) {
+          alert(`Validation errors:\n${errorData.details.join('\n')}`)
+        } else if (errorData.error) {
+          alert(`Error: ${errorData.error}`)
+        } else {
+          alert('Failed to save asset. Please check your input and try again.')
+        }
       }
     } catch (error) {
       console.error('Error saving asset:', error)
+      alert('Network error. Please try again.')
     }
   }
 
   const handleEdit = (asset: Asset) => {
+    console.log('Editing asset:', asset)
+    
+    // Convert date strings to YYYY-MM-DD format for HTML date inputs
+    const formatDateForInput = (dateString: string | null) => {
+      if (!dateString) return ''
+      try {
+        // Handle potential timezone issues by parsing the date more carefully
+        const date = new Date(dateString)
+        if (isNaN(date.getTime())) {
+          console.warn('Invalid date string:', dateString)
+          return ''
+        }
+        // Use local date to avoid timezone issues
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      } catch (error) {
+        console.error('Error formatting date:', error)
+        return ''
+      }
+    }
+    
     setEditingAsset(asset)
     setFormData({
       name: asset.name,
@@ -97,10 +196,10 @@ export default function AssetManager() {
       annualReturn: asset.annualReturn.toString(),
       returnType: asset.returnType,
       annualDividend: asset.annualDividend.toString(),
-      dividendStartDate: asset.dividendStartDate || '',
-      dividendEndDate: asset.dividendEndDate || '',
+      dividendStartDate: formatDateForInput(asset.dividendStartDate),
+      dividendEndDate: formatDateForInput(asset.dividendEndDate),
       isDividendTaxed: asset.isDividendTaxed,
-      saleDate: asset.saleDate || '',
+      saleDate: formatDateForInput(asset.saleDate),
     })
     setShowForm(true)
   }
@@ -196,6 +295,40 @@ export default function AssetManager() {
         </button>
       </div>
 
+      {/* Summary - Added to top */}
+      {assets.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {formatCurrency(assets.reduce((sum, a) => sum + a.value, 0))}
+              </div>
+              <div className="text-sm text-gray-600">Total Asset Value</div>
+              <div className="text-xs text-gray-500">(Negative assets reduce total)</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {assets.length}
+              </div>
+              <div className="text-sm text-gray-600">Total Assets</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {formatCurrency(assets.reduce((sum, a) => sum + (a.value * a.annualReturn / 100), 0))}
+              </div>
+              <div className="text-sm text-gray-600">Annual Returns</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {formatCurrency(assets.filter(a => a.type === 'CASH').reduce((sum, a) => sum + a.value, 0))}
+              </div>
+              <div className="text-sm text-gray-600">Cash</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Default Assets */}
       {assets.length === 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -240,7 +373,7 @@ export default function AssetManager() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                   required
                 />
               </div>
@@ -252,7 +385,7 @@ export default function AssetManager() {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as Asset['type'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 >
                   <option value="CASH">Cash</option>
                   <option value="SAVINGS">Savings</option>
@@ -265,28 +398,28 @@ export default function AssetManager() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Value
+                  Value (use negative for liabilities like mortgages - these reduce total asset value)
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.value}
                   onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Annual Return (%)
+                  Annual Return (%) (use negative for assets that fall in value)
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.annualReturn}
                   onChange={(e) => setFormData({ ...formData, annualReturn: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                   required
                 />
               </div>
@@ -298,7 +431,7 @@ export default function AssetManager() {
                 <select
                   value={formData.returnType}
                   onChange={(e) => setFormData({ ...formData, returnType: e.target.value as 'FIXED' | 'INFLATION_LINKED' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 >
                   <option value="FIXED">Fixed</option>
                   <option value="INFLATION_LINKED">Inflation Linked</option>
@@ -312,34 +445,57 @@ export default function AssetManager() {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={formData.annualDividend}
                   onChange={(e) => setFormData({ ...formData, annualDividend: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dividend Start Date (Optional)
+                  Dividend Start Date (Optional - Leave blank if dividends are already being paid, or set future date for future dividends)
                 </label>
                 <input
                   type="date"
                   value={formData.dividendStartDate}
-                  onChange={(e) => setFormData({ ...formData, dividendStartDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  onChange={(e) => {
+                    console.log('Dividend start date changed:', e.target.value)
+                    console.log('Event target:', e.target)
+                    console.log('Form data before:', formData.dividendStartDate)
+                    setFormData({ ...formData, dividendStartDate: e.target.value })
+                    console.log('Form data after:', e.target.value)
+                  }}
+                  onFocus={(e) => console.log('Dividend start date focused:', e.target.value)}
+                  onBlur={(e) => console.log('Dividend start date blurred:', e.target.value)}
+                  className="w-full"
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('Current dividend start date:', formData.dividendStartDate)
+                    console.log('Setting test date...')
+                    setFormData({ ...formData, dividendStartDate: '2024-12-31' })
+                  }}
+                  className="mt-1 text-xs text-blue-600 hover:text-blue-800"
+                >
+                  Set Test Date (2024-12-31)
+                </button>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dividend End Date (Optional)
+                  Dividend End Date (Optional - Leave empty for perpetual dividends)
                 </label>
                 <input
                   type="date"
                   value={formData.dividendEndDate}
-                  onChange={(e) => setFormData({ ...formData, dividendEndDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  onChange={(e) => {
+                    console.log('Dividend end date changed:', e.target.value)
+                    setFormData({ ...formData, dividendEndDate: e.target.value })
+                  }}
+                  className="w-full"
                 />
               </div>
 
@@ -350,7 +506,7 @@ export default function AssetManager() {
                 <select
                   value={formData.isDividendTaxed ? 'yes' : 'no'}
                   onChange={(e) => setFormData({ ...formData, isDividendTaxed: e.target.value === 'yes' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  className="w-full"
                 >
                   <option value="yes">Taxed</option>
                   <option value="no">Tax Free</option>
@@ -359,13 +515,16 @@ export default function AssetManager() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Sale Date (Optional)
+                  Sale Date (Optional - Asset will be sold and converted to cash on this date)
                 </label>
                 <input
                   type="date"
                   value={formData.saleDate}
-                  onChange={(e) => setFormData({ ...formData, saleDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-base"
+                  onChange={(e) => {
+                    console.log('Sale date changed:', e.target.value)
+                    setFormData({ ...formData, saleDate: e.target.value })
+                  }}
+                  className="w-full"
                 />
               </div>
             </div>
@@ -388,6 +547,15 @@ export default function AssetManager() {
               >
                 {editingAsset ? 'Update' : 'Add'} Asset
               </button>
+            </div>
+            
+            {/* Debug display */}
+            <div className="mt-4 p-3 bg-gray-100 rounded text-xs">
+              <strong>Debug - Current Form Data:</strong><br/>
+              Dividend Start: "{formData.dividendStartDate}"<br/>
+              Dividend End: "{formData.dividendEndDate}"<br/>
+              Sale Date: "{formData.saleDate}"<br/>
+              Annual Dividend: {formData.annualDividend}%
             </div>
           </form>
         </div>
@@ -485,33 +653,6 @@ export default function AssetManager() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Summary */}
-      {assets.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(assets.reduce((sum, a) => sum + a.value, 0))}
-              </div>
-              <div className="text-sm text-gray-600">Total Asset Value</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {assets.length}
-              </div>
-              <div className="text-sm text-gray-600">Total Assets</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(assets.filter(a => a.type === 'CASH').reduce((sum, a) => sum + a.value, 0))}
-              </div>
-              <div className="text-sm text-gray-600">Cash</div>
-            </div>
           </div>
         </div>
       )}
