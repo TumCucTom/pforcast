@@ -1,11 +1,47 @@
-[![Deploy Status](https://img.shields.io/badge/Deployed%20on-Vercel-00C7B7?style=for-the-badge&logo=vercel)](https://bld-cube.thomasbale.com)
-[![Issues](https://img.shields.io/badge/Issues-VibeOps-FF6B6B?style=for-the-badge)](https://github.com/TumCucTom/blind-cube/issues)
-
-# 🎮 Poly-Hop: Webcam-Controlled Platformer
+[![Deploy Status](https://img.shields.io/badge/Deployed%20on-Vercel-00C7B7?style=for-the-badge&logo=vercel)](https://forecaster.thomasbale.com)
+[![Issues](https://img.shields.io/badge/Issues-VibeOps-FF6B6B?style=for-the-badge)](https://github.com/TumCucTom/pforcast/issues)
 
 # PForcast - Lifetime Financial Budget Planner
 
-PForcast is a comprehensive web application that allows users to create and model their lifetime financial budget with advanced forecasting capabilities. The application provides detailed analysis of expenses, income, assets, and projects future financial scenarios with realistic assumptions.
+## Overview
+PForcast is a personal-finance **forecasting and planning tool**.  Add all your incomes, expenses, and assets once and the app will run 30-year, month-by-month projections so you can answer questions like:
+
+* "When will I become cash-flow negative?"
+* "What if inflation jumps to 6 %?"
+* "How large will my ISA portfolio be by age 60?"
+
+The UI is 100 % client-side React (Next 14/15), the data lives in Postgres via Prisma, and an optional Groq-powered assistant guides financial decisions in plain English.
+
+## VibeOps Workflow
+This repo is wired to **VibeOps** for both issue tracking _and_ hands-free deployments:
+
+1. Open a GitHub Issue with the `vibeops` label → a staging preview spins up automatically.
+2. Merge to `main` → VibeOps triggers the Vercel production build.
+3. Health-checks & comments are posted back to the PR so you never deploy a broken commit.
+
+> Badge at the top of this file shows live prod status and links to the issue board.
+
+## Prompts used
+
+See [prompts list](docs/promtpts.md)
+
+## Product Images
+Below is a gallery of key screens (all images live in `docs/` so GitHub keeps them version-controlled):
+
+| Screen | Preview |
+|--------|---------|
+| Landing Page | ![](docs/Screenshot%202025-06-21%20181915.png) |
+| Dashboard Overview | ![](docs/Screenshot%202025-06-21%20181938.png) |
+| Expense Manager | ![](docs/Screenshot%202025-06-21%20182004.png) |
+| Income Manager | ![](docs/Screenshot%202025-06-21%20182028.png) |
+| Asset Manager | ![](docs/Screenshot%202025-06-21%20182113.png) |
+| Projection Charts | ![](docs/Screenshot%202025-06-21%20182134.png) |
+| Settings Panel | ![](docs/Screenshot%202025-06-21%20182134.png) |
+
+## Live Demo
+👉 [https://forecaster.thomasbale.com](https://forecaster.thomasbale.com)
+
+![demo video](docs/demo.mp4)
 
 ## Features
 
@@ -51,11 +87,7 @@ PForcast is a comprehensive web application that allows users to create and mode
 
 ### Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd pforcast
-```
+1. Clone the repository
 
 2. Install dependencies:
 ```bash
