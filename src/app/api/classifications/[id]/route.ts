@@ -11,8 +11,9 @@ const updateClassificationSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: classificationId } = await params
   try {
     const token = request.cookies.get('token')?.value
     if (!token) {
@@ -35,7 +36,6 @@ export async function PUT(
     }
 
     const userId = payload.userId
-    const classificationId = params.id
 
     // Check if classification exists and belongs to user
     const existingClassification = await prisma.classification.findFirst({
@@ -87,8 +87,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: classificationId } = await params
   try {
     const token = request.cookies.get('token')?.value
     if (!token) {
@@ -101,7 +102,6 @@ export async function DELETE(
     }
 
     const userId = payload.userId
-    const classificationId = params.id
 
     // Check if classification exists and belongs to user
     const existingClassification = await prisma.classification.findFirst({

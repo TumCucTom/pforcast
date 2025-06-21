@@ -66,8 +66,9 @@ const assetSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const token = request.cookies.get('token')?.value
 
@@ -97,7 +98,7 @@ export async function PUT(
     // Check if asset exists and belongs to user
     const existingAsset = await prisma.asset.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: payload.userId,
       },
     })
@@ -110,7 +111,7 @@ export async function PUT(
     }
 
     const asset = await prisma.asset.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...data,
         dividendStartDate: toDateOrNull(data.dividendStartDate),
@@ -142,8 +143,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const token = request.cookies.get('token')?.value
 
@@ -165,7 +167,7 @@ export async function DELETE(
     // Check if asset exists and belongs to user
     const existingAsset = await prisma.asset.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: payload.userId,
       },
     })
@@ -178,7 +180,7 @@ export async function DELETE(
     }
 
     await prisma.asset.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })
