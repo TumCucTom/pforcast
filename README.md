@@ -198,23 +198,4 @@ NEXTAUTH_SECRET="your-production-nextauth-secret"
 NEXTAUTH_URL="https://your-domain.com"
 ```
 
-## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions, please open an issue in the GitHub repository.
-
-**Note**: To use the AI Financial Assistant chatbot, you'll need to:
-1. Sign up for a free account at [Groq](https://console.groq.com/)
-2. Get your API key from the Groq console
-3. Add it to your `.env` file as `GROQ_API_KEY`
