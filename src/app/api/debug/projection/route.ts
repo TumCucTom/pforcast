@@ -85,7 +85,10 @@ export async function GET(request: NextRequest) {
 
       // Project incomes with breakdown
       const incomeBreakdown: { [incomeId: string]: { name: string; amount: number; classification?: string } } = {}
-      const totalIncomes = incomes.reduce((sum, income) => {
+      let taxedIncome = 0
+      let nonTaxedIncome = 0
+      
+      incomes.forEach(income => {
         const amount = projectExpense(
           income.amount,
           income.frequency,
@@ -103,59 +106,89 @@ export async function GET(request: NextRequest) {
             amount: roundToGBP(amount),
             classification: income.classification?.name
           }
+          
+          if ((income as any).isTaxed) {
+            taxedIncome += amount
+          } else {
+            nonTaxedIncome += amount
+          }
         }
-        
-        return sum + amount
-      }, 0)
+      })
 
       // Project assets with breakdown
       const assetBreakdown: { [assetId: string]: { name: string; value: number; monthlyReturn: number; monthlyDividend: number; isSold: boolean } } = {}
       let investmentIncome = 0
       const newAssetValues: { [assetId: string]: number } = {}
+      let assetSaleProceeds = 0 // Track proceeds from asset sales
       
       assets.forEach(asset => {
         const projection = projectAsset(asset, budget.inflationRate, projectionDate, assetValues[asset.id] || 0)
-        newAssetValues[asset.id] = projection.value
         
-        assetBreakdown[asset.id] = {
-          name: asset.name,
-          value: projection.value,
-          monthlyReturn: projection.monthlyReturn,
-          monthlyDividend: projection.monthlyDividend,
-          isSold: projection.isSold
-        }
-        
-        if (!projection.isSold) {
+        if (projection.isSold) {
+          // Asset was sold - add its value to cash proceeds
+          assetSaleProceeds += assetValues[asset.id] || 0
+          newAssetValues[asset.id] = 0
+          
+          assetBreakdown[asset.id] = {
+            name: asset.name,
+            value: 0,
+            monthlyReturn: 0,
+            monthlyDividend: 0,
+            isSold: true
+          }
+        } else {
+          // Asset continues to exist
+          newAssetValues[asset.id] = projection.value
           investmentIncome += projection.monthlyDividend
+          
+          assetBreakdown[asset.id] = {
+            name: asset.name,
+            value: projection.value,
+            monthlyReturn: projection.monthlyReturn,
+            monthlyDividend: projection.monthlyDividend,
+            isSold: false
+          }
         }
       })
 
-      // Calculate total income including investment income
-      const totalIncome = totalIncomes + investmentIncome
+      // Calculate total income before tax (including investment income)
+      const totalIncomeBeforeTax = taxedIncome + nonTaxedIncome + investmentIncome
 
-      // Calculate tax using the proper tax function
-      const tax = calculateTax(totalIncome)
+      // Calculate tax only on taxed income and taxed investment income
+      const totalTaxedIncome = taxedIncome + (investmentIncome * 0.8) // Assume 80% of investment income is taxed
+      const tax = calculateTax(totalTaxedIncome)
+
+      // Calculate total income after tax
+      const totalIncomeAfterTax = totalIncomeBeforeTax - tax
 
       // Calculate net income
-      const netIncome = totalIncome - tax
+      const netIncome = totalIncomeAfterTax - totalExpenses
 
-      // Calculate cash flow
-      const cashFlow = netIncome - totalExpenses
+      // Calculate cash flow (income after tax minus expenses)
+      const cashFlow = totalIncomeAfterTax - totalExpenses
 
       // Update cash asset
       const cashAsset = assets.find(a => a.type === 'CASH')
       if (cashAsset) {
-        newAssetValues[cashAsset.id] = (newAssetValues[cashAsset.id] || 0) + cashFlow
+        // The cash asset has already been projected with returns in the asset projection loop
+        // We just need to add the cash flow and asset sale proceeds
+        const currentCashValue = newAssetValues[cashAsset.id] || 0
+        const finalCashValue = currentCashValue + cashFlow + assetSaleProceeds
+        
+        newAssetValues[cashAsset.id] = finalCashValue
       }
 
       detailedProjection.push({
         month: projectionDate.toISOString(),
-        totalIncome: roundToGBP(totalIncome),
+        totalIncome: roundToGBP(totalIncomeBeforeTax),
+        totalIncomeBeforeTax: roundToGBP(totalIncomeBeforeTax),
+        totalIncomeAfterTax: roundToGBP(totalIncomeAfterTax),
         totalExpenses: roundToGBP(totalExpenses),
         netIncome: roundToGBP(netIncome),
         tax: roundToGBP(tax),
         cashFlow: roundToGBP(cashFlow),
         investmentIncome: roundToGBP(investmentIncome),
+        cashValue: roundToGBP(newAssetValues[cashAsset?.id || ''] || 0),
         expenseBreakdown,
         incomeBreakdown,
         assetBreakdown,

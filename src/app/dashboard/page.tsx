@@ -11,7 +11,9 @@ import {
   LogOut,
   Plus,
   Eye,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft,
+  Bot
 } from 'lucide-react'
 import { format } from 'date-fns'
 import ExpenseManager from '@/components/ExpenseManager'
@@ -20,6 +22,8 @@ import AssetManager from '@/components/AssetManager'
 import ProjectionCharts from '@/components/ProjectionCharts'
 import SettingsManager from '@/components/SettingsManager'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import Link from 'next/link'
+import ChatbotModal from '@/components/ChatbotModal'
 
 interface Summary {
   currentMonth: {
@@ -38,10 +42,11 @@ interface Summary {
 }
 
 export default function Dashboard() {
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
+  const [summary, setSummary] = useState<Summary | null>(null)
+  const [activeTab, setActiveTab] = useState('overview')
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchSummary()
@@ -119,7 +124,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">PForcast</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Forecast</h1>
             </div>
             <div className="flex items-center space-x-4">
               <a
@@ -129,6 +134,13 @@ export default function Dashboard() {
                 <Eye className="h-4 w-4 mr-1" />
                 Debug
               </a>
+              <button
+                onClick={() => setIsChatbotOpen(true)}
+                className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium"
+              >
+                <Bot className="h-4 w-4 mr-1" />
+                AI Assistant
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center text-gray-600 hover:text-gray-900"
@@ -336,6 +348,13 @@ export default function Dashboard() {
           <SettingsManager />
         )}
       </div>
+      
+      {/* AI Assistant Modal */}
+      <ChatbotModal 
+        isOpen={isChatbotOpen} 
+        onClose={() => setIsChatbotOpen(false)}
+        userFinancialData={summary}
+      />
     </div>
   )
 } 

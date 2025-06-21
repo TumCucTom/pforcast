@@ -4,15 +4,19 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface DetailedMonthlyProjection {
   month: string
   totalIncome: number
+  totalIncomeBeforeTax: number
+  totalIncomeAfterTax: number
   totalExpenses: number
   netIncome: number
   tax: number
   cashFlow: number
   investmentIncome: number
+  cashValue: number
   expenseBreakdown: { [expenseId: string]: { name: string; amount: number; classification?: string } }
   incomeBreakdown: { [incomeId: string]: { name: string; amount: number; classification?: string } }
   assetBreakdown: { [assetId: string]: { name: string; value: number; monthlyReturn: number; monthlyDividend: number; isSold: boolean } }
@@ -159,9 +163,9 @@ export default function DebugPage() {
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-sm font-medium text-gray-500">Total Income</h3>
+                    <h3 className="text-sm font-medium text-gray-500">Total Income (After Tax)</h3>
                     <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(selectedMonthData.totalIncome)}
+                      {formatCurrency(selectedMonthData.totalIncomeAfterTax)}
                     </p>
                   </div>
                   <div className="bg-white rounded-lg shadow p-6">
@@ -184,13 +188,42 @@ export default function DebugPage() {
                   </div>
                 </div>
 
+                {/* Cash Value Chart */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Cash Value Over Time</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={data.detailedProjection} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <XAxis 
+                        dataKey="month" 
+                        minTickGap={24}
+                        tickFormatter={(value) => format(new Date(value), 'MMM yyyy')}
+                      />
+                      <YAxis tickFormatter={v => `£${v.toLocaleString()}`}/>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <Tooltip 
+                        formatter={(v: number) => `£${v.toLocaleString()}`}
+                        labelFormatter={(value) => format(new Date(value), 'MMMM yyyy')}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="cashValue" 
+                        stroke="#10B981" 
+                        name="Cash Value" 
+                        dot={false} 
+                        strokeWidth={2} 
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
                 {/* Detailed Breakdowns */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Income Breakdown */}
                   <div className="bg-white rounded-lg shadow">
                     <div className="px-6 py-4 border-b border-gray-200">
                       <h3 className="text-lg font-semibold text-gray-900">Income Breakdown</h3>
-                      <p className="text-sm text-gray-500">Total: {formatCurrency(selectedMonthData.totalIncome)}</p>
+                      <p className="text-sm text-gray-500">Total (After Tax): {formatCurrency(selectedMonthData.totalIncomeAfterTax)}</p>
                     </div>
                     <div className="p-6">
                       {Object.entries(selectedMonthData.incomeBreakdown).length > 0 ? (
@@ -315,9 +348,9 @@ export default function DebugPage() {
                   <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <p className="text-sm text-gray-500">Gross Income</p>
+                        <p className="text-sm text-gray-500">Gross Income (Before Tax)</p>
                         <p className="text-lg font-semibold text-gray-900">
-                          {formatCurrency(selectedMonthData.totalIncome)}
+                          {formatCurrency(selectedMonthData.totalIncomeBeforeTax)}
                         </p>
                       </div>
                       <div>
@@ -329,7 +362,7 @@ export default function DebugPage() {
                       <div>
                         <p className="text-sm text-gray-500">Net Income After Tax</p>
                         <p className="text-lg font-semibold text-green-600">
-                          {formatCurrency(selectedMonthData.netIncome)}
+                          {formatCurrency(selectedMonthData.totalIncomeAfterTax)}
                         </p>
                       </div>
                     </div>

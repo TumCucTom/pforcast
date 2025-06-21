@@ -31,7 +31,8 @@ PForcast is a comprehensive web application that allows users to create and mode
 - **Secure Authentication**: Email-based login with password reset functionality
 - **Responsive Design**: Modern, mobile-friendly interface built with Tailwind CSS
 - **Data Persistence**: All financial data securely stored and retrievable
-- **Visual Analytics**: Interactive charts and detailed breakdowns (coming soon)
+- **Visual Analytics**: Interactive charts and detailed breakdowns
+- **AI Financial Assistant**: Groq-powered chatbot for financial advice and guidance
 
 ## Technology Stack
 
@@ -72,6 +73,7 @@ DATABASE_URL="file:./dev.db"
 JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 NEXTAUTH_SECRET="your-nextauth-secret-change-this-in-production"
 NEXTAUTH_URL="http://localhost:3000"
+GROQ_API_KEY="your-groq-api-key-here"
 ```
 
 4. Set up the database:
@@ -122,6 +124,9 @@ npm run dev
 
 ### Analysis
 - `GET /api/projection` - Generate financial projections
+
+### AI Assistant
+- `POST /api/chat` - AI-powered financial advice using Groq
 
 ## Financial Calculations
 
@@ -180,3 +185,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For support and questions, please open an issue in the GitHub repository.
+
+**Note**: To use the AI Financial Assistant chatbot, you'll need to:
+1. Sign up for a free account at [Groq](https://console.groq.com/)
+2. Get your API key from the Groq console
+3. Add it to your `.env` file as `GROQ_API_KEY`

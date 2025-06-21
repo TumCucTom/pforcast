@@ -275,11 +275,17 @@ export function generateProjection(
     // Calculate cash flow (income after tax minus expenses)
     const cashFlow = totalIncomeAfterTax - totalExpenses
 
-    // Update cash asset (include asset sale proceeds)
+    // Update cash asset properly
     const cashAsset = assets.find(a => a.type === 'CASH')
     if (cashAsset) {
-      newAssetValues[cashAsset.id] = (newAssetValues[cashAsset.id] || 0) + cashFlow + assetSaleProceeds
-      console.log(`Updated cash asset: ${newAssetValues[cashAsset.id]}, cashFlow: ${cashFlow}, assetSaleProceeds: ${assetSaleProceeds}`)
+      // The cash asset has already been projected with returns in the asset projection loop
+      // We just need to add the cash flow and asset sale proceeds
+      const currentCashValue = newAssetValues[cashAsset.id] || 0
+      const finalCashValue = currentCashValue + cashFlow + assetSaleProceeds
+      
+      newAssetValues[cashAsset.id] = finalCashValue
+      
+      console.log(`Cash asset update: current=${currentCashValue}, cashFlow=${cashFlow}, assetSaleProceeds=${assetSaleProceeds}, final=${finalCashValue}`)
     }
 
     projections.push({
