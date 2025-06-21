@@ -26,17 +26,13 @@ This repo is wired to **VibeOps** for both issue tracking _and_ hands-free deplo
 See [prompts list](docs/promtpts.md)
 
 ## Product Images
-Below is a gallery of key screens (all images live in `docs/` so GitHub keeps them version-controlled):
 
-| Screen | Preview |
-|--------|---------|
-| Landing Page | ![](docs/Screenshot%202025-06-21%20181915.png) |
-| Dashboard Overview | ![](docs/Screenshot%202025-06-21%20181938.png) |
-| Expense Manager | ![](docs/Screenshot%202025-06-21%20182004.png) |
-| Income Manager | ![](docs/Screenshot%202025-06-21%20182028.png) |
-| Asset Manager | ![](docs/Screenshot%202025-06-21%20182113.png) |
-| Projection Charts | ![](docs/Screenshot%202025-06-21%20182134.png) |
-| Settings Panel | ![](docs/Screenshot%202025-06-21%20182134.png) |
+![](docs/Screenshot%202025-06-21%20181915.png)
+![](docs/Screenshot%202025-06-21%20181938.png)
+![](docs/Screenshot%202025-06-21%20182004.png)
+![](docs/Screenshot%202025-06-21%20182028.png)
+![](docs/Screenshot%202025-06-21%20182113.png)
+![](docs/Screenshot%202025-06-21%20182134.png)
 
 ## Live Demo
 👉 [https://forecaster.thomasbale.com](https://forecaster.thomasbale.com)
